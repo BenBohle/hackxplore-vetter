@@ -1,0 +1,3 @@
+All of the .C fiels here will represent individual dummy programs, 
+the only special think beeing that the server.c program will rellly on server_util_crash
+which will crash and render the server.c useless
