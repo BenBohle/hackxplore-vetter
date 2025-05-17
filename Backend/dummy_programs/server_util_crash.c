@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 		if (++i % 2 == 0)
 			kill(server_pid, SIGUSR1);
 		else
-			kill(server_pid, SIGUSR1);
+			kill(server_pid, SIGUSR2);
 		if(i == 6)
 		{
 			write(2,"Error: server utility sending the signals is currentlly down",60);
