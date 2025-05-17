@@ -153,7 +153,9 @@ export function ErrorDetailModal({
   } as const
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "-"
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "-"
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
@@ -185,6 +187,33 @@ export function ErrorDetailModal({
     navigator.clipboard.writeText(text)
     // You could add a toast notification here
     console.log("Copied to clipboard")
+  }
+
+  // Normalize statusHistory and comments to always be arrays
+  let normalizedStatusHistory: StatusHistoryItem[] = []
+  if (Array.isArray(statusHistory)) {
+    normalizedStatusHistory = statusHistory
+  } else if (typeof statusHistory === "string") {
+    try {
+      normalizedStatusHistory = JSON.parse(statusHistory)
+    } catch {
+      normalizedStatusHistory = []
+    }
+  } else if (statusHistory && typeof statusHistory === "object") {
+    normalizedStatusHistory = Object.values(statusHistory)
+  }
+
+  let normalizedComments: Comment[] = []
+  if (Array.isArray(comments)) {
+    normalizedComments = comments
+  } else if (typeof comments === "string") {
+    try {
+      normalizedComments = JSON.parse(comments)
+    } catch {
+      normalizedComments = []
+    }
+  } else if (comments && typeof comments === "object") {
+    normalizedComments = Object.values(comments)
   }
 
   return (
@@ -229,7 +258,7 @@ export function ErrorDetailModal({
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="comments">Comments ({comments.length})</TabsTrigger>
+            <TabsTrigger value="comments">Comments ({normalizedComments.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-4 space-y-4">
@@ -586,7 +615,7 @@ export function ErrorDetailModal({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {statusHistory.map((item, index) => (
+                  {normalizedStatusHistory.map((item, index) => (
                     <div key={index} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <div
@@ -606,7 +635,7 @@ export function ErrorDetailModal({
                             <Check className="h-4 w-4" />
                           )}
                         </div>
-                        {index < statusHistory.length - 1 && (
+                        {index < normalizedStatusHistory.length - 1 && (
                           <div className="h-full w-0.5 bg-muted-foreground/20 my-1" />
                         )}
                       </div>
@@ -635,24 +664,23 @@ export function ErrorDetailModal({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {comments.length === 0 ? (
+                  {normalizedComments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No comments yet. Add the first comment below.
                     </div>
                   ) : (
-                    comments.map((comment) => (
+                    normalizedComments.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback>
-                            {comment.user
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                            {(typeof comment.user === "string" && comment.user
+                              ? comment.user.split(" ").map((n) => n[0]).join("")
+                              : "U")}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center justify-between">
-                            <div className="font-medium">{comment.user}</div>
+                            <div className="font-medium">{comment.user ?? "Unknown"}</div>
                             <div className="text-xs text-muted-foreground">{formatDate(comment.timestamp)}</div>
                           </div>
                           <div className="text-sm">{comment.text}</div>
