@@ -27,12 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
         <link rel="preload" href="https://unpkg.com/@antv/g6@5/dist/g6.min.js" as="script" />
         <link rel="preload" href="https://d3js.org/d3-hierarchy.v2.min.js" as="script" />
       </head>
-      <body className={inter.className}>
+      <body>
         <ThemeProvider attribute="class" defaultTheme="white" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
