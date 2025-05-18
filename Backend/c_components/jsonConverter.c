@@ -11,12 +11,12 @@ char *jsonConverter(FailureData *emp) {
     cJSON *json = cJSON_CreateObject();
     if (!json) return NULL;
 
+    cJSON_AddNumberToObject(json, "timestamp", emp->timestamp);
     cJSON_AddStringToObject(json, "program_name", emp->program_name);
     cJSON_AddNumberToObject(json, "exit_code", emp->exit_code);
     cJSON_AddStringToObject(json, "failure_reason", emp->failure_reason);
     cJSON_AddNumberToObject(json, "pid_failure", emp->pid_failure);
     cJSON_AddNumberToObject(json, "related_pid", emp->related_pid);
-    cJSON_AddNumberToObject(json, "timestamp", emp->timestamp);
 
     char *json_str = cJSON_PrintUnformatted(json);
     cJSON_Delete(json);

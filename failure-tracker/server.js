@@ -6,8 +6,8 @@ const port = 3000;
 
 // Supabase client setup
 const supabase = createClient(
-    'https://deykewviljmbgvdukhgt.supabase.co', // Your Supabase project URL
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRleWtld3ZpbGptYmd2ZHVraGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEyNDMsImV4cCI6MjA2MzAxNzI0M30.fH3O9V70tvF8gISnKhBFetiGD7WgU4O53rlvg6Dtfoo' // Your Supabase API key
+    'https://gozlmvlplhmfxbnksamt.supabase.co', // Your Supabase project URL
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvemxtdmxwbGhtZnhibmtzYW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NTQwODgsImV4cCI6MjA2MzAzMDA4OH0.Tw_UcefnGkdW2Iw4s_FJLlTik8NYtn1rSXyJdA8va-4' // Your Supabase API key
 );
 
 // Middleware to parse JSON request bodies
@@ -53,15 +53,13 @@ app.post('/api/failure-data', async (req, res) => {
     try {
         // Insert the failure data into the Supabase database
         const { data, error } = await supabase
-            .from('failed_programs')
+            .from('errors')
             .insert([
                 {
-                    program_name,
-                    exit_code: exitCodeNum,
-                    failure_reason,
-                    pid_failure: pidFailureNum,
-                    related_pid: relatedPidNum,
-                    timestamp: timestampNum
+                    application: program_name,
+                    timestamp: timestampNum,
+                    errorMessage: failure_reason,
+                    deviceId: pidFailureNum,
                 }
             ]);
 
