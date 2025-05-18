@@ -16,8 +16,8 @@ interface ApplicationBubbleVisualizationProps {
 
 export function ApplicationBubbleVisualization({ applications = [] }: ApplicationBubbleVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [ isLoading, setIsLoading ] = useState(true)
+  const [ error, setError ] = useState<string | null>(null)
   const chartInitialized = useRef(false)
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
             "#ffed6f",
           ]
           const index = typeof id === "string" ? Number.parseInt(id) || 0 : id || 0
-          return colors[index % colors.length]
+          return colors[ index % colors.length ]
         }
 
         // Define the bubble layout
@@ -151,12 +151,13 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
 
             window.d3
               .pack()
-              .size([width, height])
+              .size([ width, height ])
               .padding((node: any) => {
                 return node.depth === 0 ? 20 : 2
               })(root)
 
             const result = { nodes: [] }
+
 
             root.descendants().forEach((node: any) => {
               if (!node || !node.data) return
@@ -172,6 +173,7 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
                 result.nodes.push({ id, style: { x, y, size: r * 2 } })
               }
             })
+
 
             return result
           }
@@ -194,18 +196,41 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
               const { id, depth, id_num } = d
               const color = getColor(id_num)
 
+              function darkenColor(hex: string, amount = 0.1): string {
+  const num = parseInt(hex.slice(1), 16);
+  let r = (num >> 16) - 255 * amount;
+  let g = ((num >> 8) & 0x00ff) - 255 * amount;
+  let b = (num & 0x0000ff) - 255 * amount;
+
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+
+  return `#${((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1)}`
+}
+
+
+              const darkerColor = darkenColor(color, 0.1) ;
+
               if (depth === 1) {
                 return {
-                  fill: "none",
+                  fill: color,
+                  fillOpacity: 0.6,
                   stroke: color,
+                  lineWidth: 1,
                   labelFontFamily: "system-ui, sans-serif",
-                  labelFontSize: 20,
+                  labelFontSize: 8,
                   labelText: id,
                   labelTextTransform: "capitalize",
-                  lineWidth: 1,
+                  labelTextAlign: "top",
+                  shadowColor: "#5b5b5b",
+                  shadowBlur: 22,
+                  shadowOffsetX: 33,
+                  shadowOffsetY: 4,
                   zIndex: -1,
                 }
               }
+
 
               const { text, style = {} } = d
 
@@ -213,15 +238,17 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
 
               return {
                 fill: color,
-                fillOpacity: 0.7,
-                stroke: color,
+                fillOpacity: 0.8,
+                stroke: darkerColor,
                 lineWidth: 1,
                 labelFontFamily: "system-ui, sans-serif",
                 labelFontSize: diameter > 40 ? 14 : 0,
                 labelText: diameter > 40 ? text : "",
-                labelPosition: "center",
-                labelFill: "#fff",
+                labelTextAlign: "center",      // <-- horizontal centering
+                labelTextBaseline: "middle",   // <-- vertical centering
+                labelFill: "#03a9f4",
               }
+
             },
           },
           layout: {
@@ -232,11 +259,11 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
             {
               type: "tooltip",
               getContent: (event: any, items: any) => {
-                if (!items || !items.length || !items[0] || !items[0].id) {
+                if (!items || !items.length || !items[ 0 ] || !items[ 0 ].id) {
                   return ""
                 }
 
-                const node = graphData.nodes.find((n: any) => n && n.id === items[0].id)
+                const node = graphData.nodes.find((n: any) => n && n.id === items[ 0 ].id)
                 if (node && node.depth === 2) {
                   return `
                     <div style="padding: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
@@ -248,7 +275,7 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
                     </div>
                   `
                 }
-                return `<div style="padding: 5px; background: white; border-radius: 4px;">${items[0].id}</div>`
+                return `<div style="padding: 5px; background: white; border-radius: 4px;">${items[ 0 ].id}</div>`
               },
             },
           ],
@@ -298,11 +325,16 @@ export function ApplicationBubbleVisualization({ applications = [] }: Applicatio
         containerRef.current.innerHTML = ""
       }
     }
-  }, [applications])
+  }, [ applications ])
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="w-full h-[500px] bg-white rounded-lg" />
+      <div
+        ref={containerRef}
+        className="absolute -inset-x-4 -inset-y-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)]"
+        style={{ background: "#e4e8eb", borderRadius: "20" }}
+      />
+
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
           <div className="flex flex-col items-center">

@@ -30,7 +30,7 @@ export function DashboardHeader({ userRole, onSidebarToggle, onChatToggle }: Das
     router.replace("/")
     router.refresh()
   }
-  
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
       <Button variant="ghost" size="icon" onClick={onSidebarToggle} className="lg:hidden">
@@ -48,17 +48,24 @@ export function DashboardHeader({ userRole, onSidebarToggle, onChatToggle }: Das
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                {userRole === "admin" ? "5" : "2"}
+              <Badge className="absolute top-0 right-0 h-5 w-5 rounded-full p-0 text-xs transform translate-x-1/2 -translate-y-1/2">
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+                  {userRole === "admin" ? "5" : "2"}
+                </div>
               </Badge>
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent
+            align="end"
+            className="w-80"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
+          >
+
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
-              {[1, 2, 3].map((i) => (
+              {[ 1, 2, 3 ].map((i) => (
                 <DropdownMenuItem key={i} className="cursor-pointer p-4">
                   <div className="flex flex-col gap-1">
                     <div className="font-medium">New error detected</div>
@@ -85,7 +92,10 @@ export function DashboardHeader({ userRole, onSidebarToggle, onChatToggle }: Das
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent
+            align="end"
+            style={{ backgroundColor: "rgba(255, 255, 255, 1)", opacity:"90%", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
+          >
             <DropdownMenuLabel>{userRole === "admin" ? "Admin Account" : "User Account"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>

@@ -70,9 +70,9 @@ export function ApplicationDetailModal({
   open,
   onOpenChange,
 }: ApplicationDetailProps) {
-  const [activeTab, setActiveTab] = useState("overview")
-  const [showAiDialog, setShowAiDialog] = useState(false)
-  const [showReportDialog, setShowReportDialog] = useState(false)
+  const [ activeTab, setActiveTab ] = useState("overview")
+  const [ showAiDialog, setShowAiDialog ] = useState(false)
+  const [ showReportDialog, setShowReportDialog ] = useState(false)
 
   const statusColors = {
     healthy: "bg-green-500",
@@ -102,7 +102,7 @@ export function ApplicationDetailModal({
               <DialogDescription className="text-base mt-1">{description}</DialogDescription>
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
-                  <div className={`h-2.5 w-2.5 rounded-full ${statusColors[status as keyof typeof statusColors]}`} />
+                  <div className={`h-2.5 w-2.5 rounded-full ${statusColors[ status as keyof typeof statusColors ]}`} />
                   <span className="text-sm font-medium capitalize">{status}</span>
                 </div>
                 <Badge variant={errorCount > 0 ? "destructive" : "outline"}>
@@ -228,12 +228,11 @@ export function ApplicationDetailModal({
 
             <TabsContent value="issues" className="mt-4 space-y-4">
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Recent Issues</CardTitle>
-                  <CardDescription>Last 5 days error statistics</CardDescription>
-                </CardHeader>
+                <CardContent className="p-2">
+                <CardTitle className="text-base">Recent Issues</CardTitle>
+                </ CardContent>
                 <CardContent>
-                  <div className="h-[250px]">
+                  <div className="h-[250px] w-full">
                     <ChartContainer
                       config={{
                         issues: {
@@ -242,39 +241,44 @@ export function ApplicationDetailModal({
                         },
                       }}
                     >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={recentIssues}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis
-                            dataKey="date"
-                            tickFormatter={(value) => {
-                              const date = new Date(value)
-                              return `${date.getMonth() + 1}/${date.getDate()}`
-                            }}
-                          />
-                          <YAxis allowDecimals={false} />
-                          <Tooltip content={<ChartTooltipContent />} />
-                          <Line
-                            type="monotone"
-                            dataKey="count"
-                            name="Issues"
-                            stroke="var(--color-issues)"
-                            activeDot={{ r: 8 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div className="aspect-[2.5/1] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={recentIssues}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="date"
+                              tickFormatter={(value) => {
+                                const date = new Date(value)
+                                return `${date.getMonth() + 1}/${date.getDate()}`
+                              }}
+                            />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Line
+                              type="monotone"
+                              dataKey="count"
+                              name="Issues"
+                              stroke="var(--color-issues)"
+                              activeDot={{ r: 8 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+
                     </ChartContainer>
                   </div>
 
+
+
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     <Card>
-                      <CardContent className="p-4">
+                      <CardContent className="p-2">
                         <div className="text-2xl font-bold">{totalIssues}</div>
                         <p className="text-sm text-muted-foreground">Total issues in last 5 days</p>
                       </CardContent>
                     </Card>
                     <Card>
-                      <CardContent className="p-4">
+                      <CardContent className="p-2">
                         <div className="text-2xl font-bold">{(totalIssues / 5).toFixed(1)}</div>
                         <p className="text-sm text-muted-foreground">Average issues per day</p>
                       </CardContent>
