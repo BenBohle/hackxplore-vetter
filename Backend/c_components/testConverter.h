@@ -4,12 +4,13 @@
 #include <curl/curl.h>
 
 typedef struct {
-    char program_name[50];
+    char program_name[256];
     int exit_code;
-    char failure_reason[100];
+    char failure_reason[256];
     int pid_failure;
     int related_pid;
     long timestamp;
 } FailureData;
 
-char *jsonConverter();
+char *jsonConverter(FailureData *emp);
+void sendJSONToServer(const char *json_data);

@@ -1,23 +1,22 @@
 CC = cc
-CFLAGS = -g -Wall -Wextra -Werror 
+CFLAGS = -g -Wall -Wextra -Werror -I/opt/homebrew/include/cjson
+LDFLAGS = -L/opt/homebrew/lib
+LIBS = -lcurl -lcjson
 
-MONITORING_SRC = main.c
+SRC = main.c c_components/jsonConverter.c
+EXE = monitoring
 
-MONITORINGL_EXE = monitoring
+all: $(EXE)
 
-NAME = $(MONITORINGL_EXE)
-
-all: $(NAME)
-
-$(MONITORINGL_EXE): $(MONITORING_SRC)
-	$(CC) $(CFLAGS) -o $(MONITORINGL_EXE) $(MONITORING_SRC)
+$(EXE): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) $(LIBS) -o $(EXE)
 
 clean:
 	rm -f *.o
 
-fclean:
-	rm -f $(NAME)
+fclean: clean
+	rm -f $(EXE)
 
-re: fclean  all
+re: fclean all
 
-.PHONY: all clean fclean re 
+.PHONY: all clean fclean re

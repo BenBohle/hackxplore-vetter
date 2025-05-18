@@ -6,24 +6,24 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-
-void log_event(pid_t pid, const char *log_file, const char *event) {
-    FILE *log = fopen("monitoring_output.log", "a");
-    if (!log) {
-        perror("fopen");
-        return;
-    }
-
-    time_t now = time(NULL);
-    char *timestamp = ctime(&now);
-    timestamp[strlen(timestamp) - 1] = '\0'; // trim newline
-
-    fprintf(log, "[%s] PID %d: %s (stderr: %s)\n", timestamp, pid, event, log_file);
-    fclose(log);
-}
+#include "c_components/testConverter.h"
 
 int is_process_alive(pid_t pid) {
-    return (kill(pid, 0) == 0 || errno == EPERM); // still alive
+    return (kill(pid, 0) == 0 || errno == EPERM);
+}
+
+int get_exit_code(const char *exit_file) {
+    int code = -1;
+    FILE *f = fopen(exit_file, "r");
+    if (f) {
+        fscanf(f, "%d", &code);
+        fclose(f);
+    }
+    return code;
+}
+
+long get_current_timestamp() {
+    return (long)time(NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -33,15 +33,12 @@ int main(int argc, char *argv[]) {
     }
 
     int count = (argc - 1) / 3;
-
     pid_t *pids = malloc(sizeof(pid_t) * count);
-    char **logs = malloc(sizeof(char *) * count);
     char **exits = malloc(sizeof(char *) * count);
     int *active = malloc(sizeof(int) * count);
 
     for (int i = 0; i < count; i++) {
         pids[i] = atoi(argv[1 + i * 3]);
-        logs[i] = argv[2 + i * 3];
         exits[i] = argv[3 + i * 3];
         active[i] = 1;
     }
@@ -52,31 +49,30 @@ int main(int argc, char *argv[]) {
             if (!active[i]) continue;
 
             if (!is_process_alive(pids[i])) {
-                // Read exit code from exit log file
-                int code = -1;
-                FILE *f = fopen(exits[i], "r");
-                if (f) {
-                    fscanf(f, "%d", &code);
-                    fclose(f);
+                int exit_code = get_exit_code(exits[i]);
+
+                FailureData report;
+                snprintf(report.program_name, sizeof(report.program_name), "UnknownProgram");
+                snprintf(report.failure_reason, sizeof(report.failure_reason), "PID %d exited with code %d", pids[i], exit_code);
+                report.exit_code = exit_code;
+                report.pid_failure = pids[i];
+                report.related_pid = getpid();
+                report.timestamp = get_current_timestamp();
+
+                char *json = jsonConverter(&report);
+                if (json) {
+                    sendJSONToServer(json);
+                    free(json);
                 }
 
-                char message[256];
-                if (code != -1) {
-                    snprintf(message, sizeof(message), "Process terminated with exit code %d", code);
-                } else {
-                    snprintf(message, sizeof(message), "Process terminated (exit code unavailable)");
-                }
-
-                log_event(pids[i], logs[i], message);
                 active[i] = 0;
                 running--;
             }
         }
-        usleep(500000); // check every 0.5 sec
+        usleep(500000);
     }
 
     free(pids);
-    free(logs);
     free(exits);
     free(active);
 
