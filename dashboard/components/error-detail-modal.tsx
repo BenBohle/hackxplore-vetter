@@ -278,8 +278,8 @@ Stack Trace: ${stackTrace}
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-2">
           <div className="flex items-center justify-between">
-            <Badge variant={statusVariants[status]} className="px-3 py-1 text-xs">
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+            <Badge variant={statusVariants[status] ?? "default"} className="px-3 py-1 text-xs">
+               {(status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unknown")}
             </Badge>
             <div className="flex items-center gap-2">
               <div className={`h-2.5 w-2.5 rounded-full ${severityColors[severity]}`} />

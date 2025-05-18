@@ -97,9 +97,13 @@ export function DashboardSidebar({ userRole, isOpen, onToggle, className }: Dash
   return (
     <aside className={cn("flex h-full w-72 flex-col border-r bg-muted/10", className)}>
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <AlertTriangle className="h-6 w-6 text-primary" />
-          <span className="text-xl">ErrorTrack</span>
+        <Link href="/" className="flex items-center justify-center w-full">
+          <img
+            src="/tracer-logo-weiß-blau.png"
+            alt="Logo"
+            className="h-16 w-auto mx-auto"
+            style={{ display: "block" }}
+          />
         </Link>
         <Button variant="ghost" size="icon" onClick={onToggle} className="ml-auto lg:hidden">
           <ChevronLeft className="h-4 w-4" />
