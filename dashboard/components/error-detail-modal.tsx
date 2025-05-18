@@ -138,6 +138,15 @@ export function ErrorDetailModal({
   const [newComment, setNewComment] = useState("")
   const [newStatus, setNewStatus] = useState<string>(status)
   const [showAiDialog, setShowAiDialog] = useState(false)
+  const [aiInput, setAiInput] = useState("")
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiMessages, setAiMessages] = useState([
+    {
+      role: "system",
+      content: "You are an expert assistant for error tracking and application support. Answer concisely and helpfully. If the user selects an application, focus your answer on that application.",
+    },
+  ])
+  // Remove selectedAiApp state, always use the error's application
 
   const severityColors = {
     low: "bg-blue-500",
@@ -214,6 +223,54 @@ export function ErrorDetailModal({
     }
   } else if (comments && typeof comments === "object") {
     normalizedComments = Object.values(comments)
+  }
+
+  // AI system prompt
+  const aiSystemPrompt =
+    "You are an expert assistant for error tracking and application support. Answer concisely and helpfully. If the user selects an application, focus your answer on that application."
+
+  const handleAiSendMessage = async () => {
+    if (!aiInput.trim()) return
+
+    setAiMessages((prev) => [...prev, { role: "user", content: aiInput }])
+    setAiLoading(true)
+
+    // Always use the error's application
+    const appPart = application ? `Application: ${application}\n` : ""
+    const errorDetails = `
+Error Message: ${errorMessage}
+Short Message: ${shortMessage}
+Full Message: ${fullMessage}
+Stack Trace: ${stackTrace}
+`
+    const userPrompt = `${appPart}${errorDetails}User: ${aiInput}`
+
+    try {
+      const response = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama2-uncensored:latest",
+          stream: false,
+          prompt: `${aiSystemPrompt}\n${userPrompt}`,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to connect to Ollama API")
+
+      const data = await response.json()
+      const aiContent = data.response || "Sorry, I couldn't generate a response."
+
+      setAiMessages((prev) => [...prev, { role: "system", content: aiContent }])
+    } catch (err) {
+      setAiMessages((prev) => [
+        ...prev,
+        { role: "system", content: "Error: Could not connect to AI backend." },
+      ])
+    } finally {
+      setAiLoading(false)
+      setAiInput("")
+    }
   }
 
   return (
@@ -780,46 +837,46 @@ export function ErrorDetailModal({
             <DialogDescription>AI-powered analysis for error {ticketId}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="rounded-md bg-muted p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                <h4 className="font-medium">Error Analysis</h4>
-              </div>
-              <p className="text-sm">
-                This appears to be a {severity} severity error in the application's rendering process. Based on the
-                context, it's likely caused by an undefined property being accessed during component rendering.
-              </p>
+            {/* Application dropdown removed, always use the error's application */}
+            {/* AI chat messages */}
+            <div className="max-h-64 overflow-y-auto space-y-4 bg-muted/50 rounded-md p-3">
+              {aiMessages.map((msg, idx) => (
+                <div key={idx} className={msg.role === "user" ? "text-right" : "text-left"}>
+                  <div
+                    className={
+                      msg.role === "user"
+                        ? "inline-block bg-primary text-primary-foreground rounded-lg px-3 py-2 mb-1"
+                        : "inline-block bg-muted rounded-lg px-3 py-2 mb-1"
+                    }
+                  >
+                    <span className="text-sm">{msg.content}</span>
+                  </div>
+                </div>
+              ))}
+              {aiLoading && (
+                <div className="text-xs text-muted-foreground text-center">AI is thinking...</div>
+              )}
             </div>
-            <div className="rounded-md bg-muted p-4">
-              <h4 className="mb-2 font-medium">Potential Causes</h4>
-              <ul className="text-sm space-y-1 list-disc pl-4">
-                <li>Missing null check before accessing a property</li>
-                <li>Race condition where data is accessed before it's available</li>
-                <li>API response format changed but code wasn't updated</li>
-                <li>Network request failed but error handling is incomplete</li>
-              </ul>
-            </div>
-            <div className="rounded-md bg-muted p-4">
-              <h4 className="mb-2 font-medium">Recommended Solution</h4>
-              <p className="text-sm">
-                Add proper null checking before accessing the property or implement default values. Check the component
-                that renders at {context}.
-              </p>
-              <div className="mt-2 bg-background rounded-md p-3 text-sm font-mono">
-                <pre>{`// Before
-const value = data.property;
-
-// After
-const value = data?.property ?? defaultValue;`}</pre>
-              </div>
-            </div>
-            <div className="rounded-md bg-muted p-4">
-              <h4 className="mb-2 font-medium">Similar Issues</h4>
-              <p className="text-sm">
-                This error is similar to 3 other errors that have occurred in the past month. All were related to
-                undefined properties in the same application.
-              </p>
-            </div>
+            {/* AI input form */}
+            <form
+              className="flex gap-2"
+              onSubmit={e => {
+                e.preventDefault()
+                handleAiSendMessage()
+              }}
+            >
+              <Textarea
+                placeholder="Ask the AI about this error..."
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                className="flex-1 min-h-[40px]"
+                disabled={aiLoading}
+              />
+              <Button type="submit" disabled={aiLoading || !aiInput.trim()}>
+                <Bot className="h-4 w-4 mr-2" />
+                Send
+              </Button>
+            </form>
           </div>
           <DialogFooter>
             <Button onClick={() => setShowAiDialog(false)}>Close</Button>

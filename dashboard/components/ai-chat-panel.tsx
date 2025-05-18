@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AIChatPanelProps {
   isOpen: boolean
@@ -22,26 +23,56 @@ export function AIChatPanel({ isOpen, onClose, className }: AIChatPanelProps) {
     },
   ])
   const [input, setInput] = useState("")
+  const [selectedApp, setSelectedApp] = useState<string>("")
+  const [loading, setLoading] = useState(false)
 
-  const handleSendMessage = () => {
+  // System prompt for Llama2
+  const systemPrompt =
+    "You are acting as an internal IT helpdesk assistant for a company. Your primary responsibility is to provide employees with clear, actionable, and technically sound recommendations for resolving common IT issues. Approach each problem methodically, using troubleshooting best practices. Offer concise, professional responses tailored to a business environment. If all troubleshooting options have been exhausted or if the issue is beyond your capabilities, you must always conclude by advising the user to contact their IT department for further assistance."
+
+  const handleSendMessage = async () => {
     if (!input.trim()) return
 
     // Add user message
-    setMessages([...messages, { role: "user", content: input }])
+    setMessages((prev) => [...prev, { role: "user", content: input }])
+    setLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Compose prompt for Llama2
+    const appPart = selectedApp ? `Application: ${selectedApp}\n` : ""
+    const userPrompt = `${appPart}User: ${input}`
+
+    try {
+      const response = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama2-uncensored:latest",
+          stream: false,
+          prompt: `${systemPrompt}\n${userPrompt}`,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to connect to Ollama API")
+      }
+
+      const data = await response.json()
+      // Ollama returns { response: "...", ... }
+      const aiContent = data.response || "Sorry, I couldn't generate a response."
+
       setMessages((prev) => [
         ...prev,
-        {
-          role: "system",
-          content:
-            "I'll help you analyze that error. Could you provide more details about when it occurred and what steps led to it?",
-        },
+        { role: "system", content: aiContent },
       ])
-    }, 1000)
-
-    setInput("")
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "system", content: "Error: Could not connect to AI backend." },
+      ])
+    } finally {
+      setLoading(false)
+      setInput("")
+    }
   }
 
   return (
@@ -83,9 +114,25 @@ export function AIChatPanel({ isOpen, onClose, className }: AIChatPanelProps) {
             </div>
           ))}
         </div>
+        {loading && (
+          <div className="flex justify-center mt-4">
+            <span className="text-xs text-muted-foreground">AI is thinking...</span>
+          </div>
+        )}
       </ScrollArea>
-
       <div className="border-t p-4">
+        {/* Better dropdown for application selection */}
+        <div className="mb-2">
+          <Select value={selectedApp} onValueChange={setSelectedApp}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Application" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Microsoft Teams">Microsoft Teams</SelectItem>
+              <SelectItem value="Chrome">Chrome</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -98,8 +145,9 @@ export function AIChatPanel({ isOpen, onClose, className }: AIChatPanelProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="flex-1"
+            disabled={loading}
           />
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={loading}>
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
           </Button>
